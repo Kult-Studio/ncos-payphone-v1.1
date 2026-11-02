@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payphone · Log explorer</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header><div class="brand">NCOS <span>/ PAYPHONE</span></div><span class="badge">OFFLINE ANALYTICS</span></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">INTERACTION INSIGHTS</p><h1>Every call tells a story.</h1><p class="muted">Explore payphone sessions, discover patterns, and see what people watched.</p></div><div class="actions"><label class="button primary" for="upload">＋ Import CSV logs</label><input id="upload" type="file" accept=".csv,text/csv" multiple hidden><button id="restore">Use bundled logs</button></div></section>
+    <p id="status" role="status"></p>
+    <section class="filters" aria-label="Session filters">
+      <label>From<input id="from" type="date"></label>
+      <label>To<input id="to" type="date"></label>
+      <label>Video<select id="video"><option value="">All videos</option></select></label>
+      <label>Language<select id="language"><option value="">All languages</option></select></label>
+      <label>Session type<select id="type"><option value="">All sessions</option><option value="played">With video starts</option><option value="empty">No video starts</option></select></label>
+      <label>Min. seconds<input id="minimum" type="number" min="0" value="0"></label>
+      <label class="search">Search<input id="search" type="search" placeholder="Video, timestamp, filename…"></label>
+      <button id="reset">Reset filters</button>
+    </section>
+    <section class="metrics" aria-label="Summary">
+      <article><p>SESSIONS</p><strong id="sessions">—</strong><small id="session-note"></small></article>
+      <article><p>VIDEO STARTS</p><strong id="starts">—</strong><small>Includes repeated starts</small></article>
+      <article><p>AVG. SESSION</p><strong id="average">—</strong><small>Based on session start / end</small></article>
+      <article><p>TOTAL SESSION TIME</p><strong id="total">—</strong><small>Not video watch time</small></article>
+    </section>
+    <section class="charts">
+      <article class="panel"><h2>Sessions by day</h2><p class="muted">Activity across the selected period</p><div id="daily" class="bars"></div></article>
+      <article class="panel"><h2>Time of day</h2><p class="muted">Session starts · original log time</p><div id="hourly" class="hours"></div><div class="axis"><span>00:00</span><span>12:00</span><span>23:00</span></div></article>
+      <article class="panel"><h2>Videos started</h2><p class="muted">Starts by topic</p><div id="topics" class="bars"></div></article>
+      <article class="panel"><h2>Languages</h2><p class="muted">Starts by language</p><div id="languages" class="bars"></div></article>
+    </section>
+    <section class="panel records"><div class="table-heading"><div><h2>Session explorer</h2><p id="results" class="muted"></p></div><button id="export">↓ Export filtered CSV</button></div><div class="table-scroll"><table><thead><tr><th><button id="sort">Start time ↓</button></th><th>End time</th><th>Duration</th><th>Videos started</th><th>Source</th></tr></thead><tbody id="rows"></tbody></table></div><div class="pagination"><button id="previous">← Previous</button><span id="page"></span><button id="next">Next →</button></div></section>
+    <footer>Processed entirely in your browser. Imported files are never uploaded or saved. Times are shown exactly as logged.<br>Video starts indicate selections, not completed views. Video/language filters match the same start; charts show all starts in matching sessions.</footer>
+  </main>
+</body>
+</html>
