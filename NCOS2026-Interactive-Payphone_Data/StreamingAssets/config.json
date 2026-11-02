@@ -1,0 +1,7 @@
+{
+    "serialPort": "COM4",
+    "baudRate": 9600,
+    "audioVolume": 0.8,
+    "canAdjustVolume": false,
+    "cannotSkipLanguageScreen": false
+}
