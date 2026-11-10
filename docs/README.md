@@ -7,7 +7,7 @@ Standalone, dependency-free dashboard for `Logs/SessionLog_*.csv`. Open `index.h
 1. Commit and push these changes to `main`.
 2. In repository **Settings → Pages → Build and deployment**, select **GitHub Actions**.
 3. Run **Publish log dashboard** in the Actions tab (or push a dashboard/log change).
-4. Visit **https://kent12t.github.io/ncos-payphone-v1.1/** after deployment completes.
+4. Visit **https://kult-studio.github.io/ncos-payphone-v1.1/** after deployment completes.
 
 The workflow publishes only `docs/`, not the Unity application. It rebuilds bundled data from the selected log dates on each deployment. **Bundled logs are downloadable by anyone who can access the published site**; do not publish sensitive logs. For a local-only dataset, use Import CSV logs; imported files are processed in memory and never uploaded or persisted.
 
