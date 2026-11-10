@@ -35,14 +35,13 @@ function timestamp(value) {
   return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d && date.getUTCHours() === h && date.getUTCMinutes() === min && date.getUTCSeconds() === s ? +date : NaN;
 }
 
-function load(files, source) {
-  const next = []; let skipped = 0, invalidFiles = 0, empty = 0;
+function load(files) {
+  const next = []; let skipped = 0, invalidFiles = 0;
   for (const file of files) {
     let rows;
     try { rows = parseCSV(file.text); } catch { invalidFiles++; continue; }
     const header = rows.shift();
     if (!header || header[0].trim() !== 'StartTime' || header[1]?.trim() !== 'EndTime' || header[2]?.trim() !== 'Videos Started') { invalidFiles++; continue; }
-    if (!rows.length) empty++;
     for (const row of rows) {
       const start = row[0].trim(), end = (row[1] || '').trim();
       const a = timestamp(start), b = timestamp(end);
@@ -59,7 +58,11 @@ function load(files, source) {
     const values = [...new Set(sessions.flatMap(s => s.videos.map(v => v[key])))].sort();
     $(id).innerHTML = `<option value="">${label}</option>` + values.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
   }
-  $('status').textContent = `${source} · ${files.length} files · ${number(next.length)} sessions · ${empty} header-only files. ${skipped} invalid rows and ${invalidFiles} unsupported files skipped. Files are combined without deduplication.`;
+  const plural = (n, word) => `${number(n)} ${word}${n === 1 ? '' : 's'}`;
+  const skippedParts = [];
+  if (skipped) skippedParts.push(plural(skipped, 'invalid row'));
+  if (invalidFiles) skippedParts.push(plural(invalidFiles, 'unsupported file'));
+  $('status').textContent = skippedParts.length ? `Skipped ${skippedParts.join(' and ')}.` : '';
   reset();
 }
 
@@ -97,24 +100,41 @@ function bars(id, entries) {
 function render() {
   const videos = filtered.flatMap(s => s.videos), total = filtered.reduce((n,s) => n + s.duration, 0);
   $('sessions').textContent = number(filtered.length);
-  $('session-note').textContent = `of ${number(sessions.length)} loaded sessions`;
   $('starts').textContent = number(videos.length);
   $('average').textContent = filtered.length ? duration(total / filtered.length) : '—';
-  $('total').textContent = duration(total);
-  bars('daily', count(filtered.map(s => s.start.slice(0,10))).sort((a,b) => a[0].localeCompare(b[0])));
+  bars('daily', count(filtered.map(s => s.start.slice(0,10))).sort((a,b) => a[0].localeCompare(b[0])).map(([day, n]) => [dayLabel(day), n]));
   bars('topics', count(videos.map(v => v.topic)).sort((a,b) => b[1] - a[1]));
   bars('languages', count(videos.map(v => v.language)).sort((a,b) => b[1] - a[1]));
-  const hours = Array(24).fill(0);
-  filtered.forEach(s => hours[Number(s.start.slice(11,13))]++);
-  const max = Math.max(1, ...hours);
-  $('hourly').innerHTML = hours.map((n,h) => `<div class="hour" style="height:${Math.max(1, n / max * 100)}%" role="img" aria-label="${h}:00: ${n} sessions" title="${h}:00 — ${n} sessions"></div>`).join('');
+  hourly();
   renderTable();
+}
+function dayLabel(day) {
+  const [, month, date] = day.split('-').map(Number);
+  return `${date} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month - 1]} ${day.slice(0, 4)}`;
+}
+function hourly() {
+  const days = new Map();
+  for (const s of filtered) {
+    const day = s.start.slice(0, 10);
+    if (!days.has(day)) days.set(day, Array(24).fill(0));
+    days.get(day)[Number(s.start.slice(11, 13))]++;
+  }
+  const dates = [...days.keys()].sort();
+  if (!dates.length) { $('hourly').innerHTML = '<p class="empty">No matching data</p>'; $('hourly-axis').hidden = true; return; }
+  const peak = Math.max(1, ...dates.flatMap(day => days.get(day)));
+  const pad = h => String(h).padStart(2, '0');
+  tooltip.hidden = true;
+  $('hourly').innerHTML = dates.map(day => {
+    const hours = days.get(day), total = hours.reduce((n, h) => n + h, 0), label = dayLabel(day);
+    return `<div class="day-row"><div class="day-meta"><span class="day-name">${escapeHTML(label)}</span><span class="day-total">${number(total)} session${total === 1 ? '' : 's'}</span></div><div class="hours" role="group" aria-label="Session starts on ${escapeHTML(label)}">${hours.map((n, h) => `<div class="hour" style="height:${n / peak * 100}%" role="img" aria-label="${pad(h)}:00: ${n} sessions" data-day="${escapeHTML(label)}" data-hour="${h}" data-count="${n}" data-total="${total}"></div>`).join('')}</div></div>`;
+  }).join('');
+  $('hourly-axis').hidden = false;
 }
 function renderTable() {
   filtered.sort((a,b) => descending ? b.start.localeCompare(a.start) : a.start.localeCompare(b.start));
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  $('rows').innerHTML = filtered.slice(page * pageSize, (page + 1) * pageSize).map(s => `<tr><td>${escapeHTML(s.start)}</td><td>${escapeHTML(s.end)}</td><td>${duration(s.duration)}</td><td>${s.videos.length ? s.videos.map(v => `<span class="tag">${escapeHTML(v.name)}</span>`).join('') : '<span class="muted">No video starts</span>'}</td><td>${escapeHTML(s.source)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No sessions match these filters.</td></tr>';
-  $('results').textContent = `${number(filtered.length)} matching sessions`;
+  $('rows').innerHTML = filtered.slice(page * pageSize, (page + 1) * pageSize).map(s => `<tr><td>${escapeHTML(s.start)}</td><td>${escapeHTML(s.end)}</td><td>${duration(s.duration)}</td><td>${s.videos.length ? s.videos.map(v => `<span class="tag">${escapeHTML(v.name)}</span>`).join('') : '<span class="muted">No video starts</span>'}</td><td>${escapeHTML(s.source)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No sessions match the current filters.</td></tr>';
+  $('results').textContent = `${number(filtered.length)} sessions`;
   $('page').textContent = `Page ${page + 1} of ${pages}`;
   $('previous').disabled = page === 0;
   $('next').disabled = page + 1 >= pages;
@@ -130,17 +150,35 @@ function exportCSV() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 for (const id of ['from','to','video','language','type','minimum','search']) $(id).addEventListener('input', applyFilters);
+const tooltip = $('tooltip');
+const hideTip = () => { tooltip.hidden = true; };
+$('hourly').addEventListener('pointerover', event => {
+  const bar = event.target.closest('.hour');
+  if (!bar) return;
+  const hour = Number(bar.dataset.hour), count = Number(bar.dataset.count), total = Number(bar.dataset.total);
+  $('tip-day').textContent = bar.dataset.day;
+  $('tip-time').textContent = `${String(hour).padStart(2, '0')}:00–${String(hour + 1).padStart(2, '0')}:00`;
+  $('tip-count').textContent = `${number(count)} session start${count === 1 ? '' : 's'}`;
+  $('tip-share').textContent = `${Math.round(count / total * 100)}% of ${number(total)} that day`;
+  tooltip.hidden = false;
+  const barBox = bar.getBoundingClientRect(), tipBox = tooltip.getBoundingClientRect();
+  const left = Math.max(8, Math.min(barBox.left + barBox.width / 2 - tipBox.width / 2, document.documentElement.clientWidth - tipBox.width - 8));
+  const above = barBox.top - tipBox.height - 8;
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${Math.max(8, above < 8 ? barBox.bottom + 8 : above)}px`;
+});
+$('hourly').addEventListener('pointerout', event => { if (event.target.closest('.hour')) hideTip(); });
+window.addEventListener('scroll', hideTip, true);
 $('reset').addEventListener('click', reset);
-$('restore').addEventListener('click', () => load(window.BUNDLED_LOGS || [], 'Bundled logs'));
 $('upload').addEventListener('change', async event => {
   const files = [...event.target.files];
   if (!files.length) return;
-  try { load(await Promise.all(files.map(async f => ({name:f.name,text:await f.text()}))), 'Local import'); }
-  catch { $('status').textContent = 'Could not read the selected files. Please try again.'; }
+  try { load(await Promise.all(files.map(async f => ({name:f.name,text:await f.text()})))); }
+  catch { $('status').textContent = 'Could not read the selected files.'; }
   event.target.value = '';
 });
 $('sort').addEventListener('click', () => { descending = !descending; renderTable(); });
 $('previous').addEventListener('click', () => { page--; renderTable(); });
 $('next').addEventListener('click', () => { page++; renderTable(); });
 $('export').addEventListener('click', exportCSV);
-load(window.BUNDLED_LOGS || [], 'Bundled logs');
+load(window.BUNDLED_LOGS || []);

@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 function dashboard() {
   const elements = new Map();
-  const context = vm.createContext({console, setTimeout, Blob, URL, window: {}, document: {
+  const context = vm.createContext({console, setTimeout, Blob, URL, window: {addEventListener(){}}, document: {
     getElementById(id) {
       if (!elements.has(id)) elements.set(id, {value:'', innerHTML:'', textContent:'', addEventListener(){}});
       return elements.get(id);
@@ -40,6 +40,16 @@ test('combined topic/language matches same start; empty and invalid rows', () =>
   assert.equal(run('filtered[0].duration'), 0);
   run('reset(); $("from").value="2026-11-01"; applyFilters()');
   assert.equal(run('filtered.length'), 0);
+});
+test('bundled data starts on 30 October and time of day is split per day', () => {
+  const {run} = dashboard();
+  assert.equal(run('sessions.every(s => s.start.slice(0,10) >= "2026-10-30")'), true);
+  const html = run('$("hourly").innerHTML');
+  assert.equal((html.match(/class="day-row"/g) || []).length, run('new Set(sessions.map(s => s.start.slice(0,10))).size'));
+  assert.ok(html.includes('30 Oct 2026'));
+  assert.ok(html.includes('31 Oct 2026'));
+  assert.ok(html.includes('data-count='));
+  assert.ok(html.includes('data-total='));
 });
 test('escaping protects imported text', () => {
   const {run} = dashboard();
