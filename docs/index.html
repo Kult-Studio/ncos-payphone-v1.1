@@ -25,16 +25,18 @@
     <section class="metrics" aria-label="Summary">
       <article><p>SESSIONS</p><strong id="sessions">—</strong></article>
       <article><p>VIDEO STARTS</p><strong id="starts">—</strong></article>
-      <article><p>AVG. SESSION</p><strong id="average">—</strong></article>
+      <article><p>AVG. CALL TIME</p><strong id="average">—</strong></article>
+      <article><p>TOTAL CALL TIME</p><strong id="calltime">—</strong></article>
     </section>
     <section class="charts">
       <article class="panel"><h2>Sessions by day</h2><div id="daily" class="bars"></div></article>
       <article class="panel"><h2>Time of day</h2><div id="hourly" class="day-grid"></div><div id="hourly-axis" class="axis day-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div></article>
+      <article class="panel wide"><h2>Call length</h2><div id="lengths" class="bars"></div></article>
       <article class="panel"><h2>Videos started</h2><div id="topics" class="bars"></div></article>
       <article class="panel"><h2>Languages</h2><div id="languages" class="bars"></div></article>
     </section>
-    <section class="panel records"><div class="table-heading"><div><h2>Sessions</h2><p id="results" class="muted"></p></div><button id="export">Export CSV</button></div><div class="table-scroll"><table><thead><tr><th><button id="sort">Start time ↓</button></th><th>End time</th><th>Duration</th><th>Videos started</th><th>Source</th></tr></thead><tbody id="rows"></tbody></table></div><div class="pagination"><button id="previous">← Previous</button><span id="page"></span><button id="next">Next →</button></div></section>
-    <footer>All processing happens in your browser. Imported files are not uploaded or saved. Times are shown as they appear in the logs.<br>Video starts are selections, not completed views. Video and language filters match a single start; charts then show all starts from the matching sessions.</footer>
+    <section class="panel records"><div class="table-heading"><div><h2>Sessions</h2><p id="results" class="muted"></p></div><button id="export">Export CSV</button></div><div class="table-scroll"><table><thead><tr><th><button id="sort">Start time ↓</button></th><th>End time</th><th>Call length</th><th>Videos started</th><th>Source</th></tr></thead><tbody id="rows"></tbody></table></div><div class="pagination"><button id="previous">← Previous</button><span id="page"></span><button id="next">Next →</button></div></section>
+    <footer>All processing happens in your browser. Imported files are not uploaded or saved. Times are shown as they appear in the logs.<br>Call length is end time minus start time, not time watched. Video starts are selections, not completed views. Video and language filters match a single start; charts then show all starts from the matching sessions.</footer>
   </main>
   <div id="tooltip" class="tooltip" role="tooltip" hidden>
     <span id="tip-day" class="tip-day"></span>

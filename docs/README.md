@@ -19,6 +19,7 @@ Run `python scripts/build-dashboard.py` from the repository root after changing 
 
 - Expected header: `StartTime,EndTime,Videos Started`. Each remaining column is a video start; repeats count individually. Quoted CSV fields and UTF-8 BOMs are supported.
 - Dates filter session **start** dates, inclusive. Times use the log's clock with no timezone conversion; duration is end minus start, not time watched.
+- **Call length** is bucketed as 0s, 1–15s, 16–30s, 31–60s, 1–2 min, 2–5 min, and 5 min+ after filtering. The summary also shows total and average call time for the matching sessions.
 - Time of day is charted per calendar day, each with its own 24-hour profile. Bar heights share one scale across the days shown.
 - Topic/language filters must match the same video start. Metrics and charts then include **all** starts in those matching sessions.
 - Invalid dates, end-before-start rows, and unsupported files are reported and skipped. Header-only files are valid. Zero-second sessions are retained.

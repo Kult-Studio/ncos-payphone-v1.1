@@ -93,6 +93,15 @@ function count(values) {
   for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
   return [...counts.entries()];
 }
+const callLengths = [
+  ['0s', 1], ['1–15s', 16], ['16–30s', 31], ['31–60s', 61],
+  ['1–2 min', 121], ['2–5 min', 301], ['5 min+', Infinity]
+];
+function lengthBuckets(list) {
+  return callLengths
+    .map(([label, limit], i) => [label, list.filter(s => s.duration < limit && (i === 0 || s.duration >= callLengths[i - 1][1])).length])
+    .filter(entry => entry[1]);
+}
 function bars(id, entries) {
   const max = Math.max(1, ...entries.map(e => e[1]));
   $(id).innerHTML = entries.length ? entries.map(([label, value]) => `<div class="bar-row"><span class="bar-label">${escapeHTML(label)}</span><div class="track"><div class="fill" style="width:${100 * value / max}%"></div></div><span class="bar-value">${number(value)}</span></div>`).join('') : '<p class="empty">No matching data</p>';
@@ -102,7 +111,9 @@ function render() {
   $('sessions').textContent = number(filtered.length);
   $('starts').textContent = number(videos.length);
   $('average').textContent = filtered.length ? duration(total / filtered.length) : '—';
+  $('calltime').textContent = filtered.length ? duration(total) : '—';
   bars('daily', count(filtered.map(s => s.start.slice(0,10))).sort((a,b) => a[0].localeCompare(b[0])).map(([day, n]) => [dayLabel(day), n]));
+  bars('lengths', lengthBuckets(filtered));
   bars('topics', count(videos.map(v => v.topic)).sort((a,b) => b[1] - a[1]));
   bars('languages', count(videos.map(v => v.language)).sort((a,b) => b[1] - a[1]));
   hourly();

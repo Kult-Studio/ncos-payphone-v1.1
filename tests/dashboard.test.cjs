@@ -51,6 +51,13 @@ test('bundled data starts on 30 October and time of day is split per day', () =>
   assert.ok(html.includes('data-count='));
   assert.ok(html.includes('data-total='));
 });
+test('call length buckets partition sessions and total call time is the sum', () => {
+  const {run} = dashboard();
+  assert.equal(run('lengthBuckets(filtered).reduce((n,e) => n + e[1],0)'), run('filtered.length'));
+  assert.equal(run('lengthBuckets([{duration:0},{duration:15},{duration:16},{duration:300},{duration:301}]).map(e => e[1]).join(",")'), '1,1,1,1,1');
+  assert.equal(run('lengthBuckets([{duration:400}])[0][0]'), '5 min+');
+  assert.equal(run('$("calltime").textContent'), run('duration(filtered.reduce((n,s) => n + s.duration,0))'));
+});
 test('escaping protects imported text', () => {
   const {run} = dashboard();
   assert.equal(run('escapeHTML("<script> & ")'), '&lt;script&gt; &amp; ');
